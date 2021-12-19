@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/styles';
 import {
-  IconButton,
   Grid,
-  Typography,
   LinearProgress
 } from '@material-ui/core';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import { database } from '../../firebase';
 import CategoryCard from './components/CategoryCard';
 
@@ -58,15 +54,6 @@ const CategoryList = () => {
             </Grid>
           ))}
         </Grid>
-      </div>
-      <div className={classes.pagination}>
-        <Typography variant="caption">1-6 of 20</Typography>
-        <IconButton>
-          <ChevronLeftIcon />
-        </IconButton>
-        <IconButton>
-          <ChevronRightIcon />
-        </IconButton>
       </div>
     </div>
   );

@@ -16,24 +16,23 @@ const Footer = props => {
   const classes = useStyles();
 
   return (
-    <div
-      {...rest}
-      className={clsx(classes.root, className)}
-    >
+    <div {...rest} className={clsx(classes.root, className)}>
       <Typography variant="body1">
         &copy;{' '}
-        <Link
-          component="a"
-          href="https://devias.io/"
-          target="_blank"
-        >
-          Devias IO
+        <Link component="a" href="/">
+          SSStudio by PTMT
         </Link>
-        . 2019
+        . 2020
       </Typography>
       <Typography variant="caption">
-        Created with love for the environment. By designers and developers who
-        love to work together in offices!
+        {'SSStudio office work, designed by '}
+        <Link
+          component="a"
+          target="_blank"
+          href="https://github.com/phamtanminhtien">
+          PTMT
+        </Link>
+        , use Material UI
       </Typography>
     </div>
   );

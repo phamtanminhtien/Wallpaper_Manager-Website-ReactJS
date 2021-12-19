@@ -6,16 +6,13 @@ import { Divider, Drawer } from '@material-ui/core';
 import DashboardIcon from '@material-ui/icons/Dashboard';
 import PictureIcon from '@material-ui/icons/Collections';
 import PeopleIcon from '@material-ui/icons/People';
-import ShoppingBasketIcon from '@material-ui/icons/ShoppingBasket';
-import TextFieldsIcon from '@material-ui/icons/TextFields';
-import ImageIcon from '@material-ui/icons/Image';
-import AccountBoxIcon from '@material-ui/icons/AccountBox';
-import SettingsIcon from '@material-ui/icons/Settings';
-import LockOpenIcon from '@material-ui/icons/LockOpen';
 import CategoryIcon from '@material-ui/icons/Category';
 import AddPhotoAlternateIcon from '@material-ui/icons/AddPhotoAlternate';
+import AutorenewIcon from '@material-ui/icons/Autorenew';
+import LibraryAddIcon from '@material-ui/icons/LibraryAdd';
+import ColorizeIcon from '@material-ui/icons/Colorize';
 
-import { Profile, SidebarNav, UpgradePlan } from './components';
+import { Profile, SidebarNav } from './components';
 
 const useStyles = makeStyles(theme => ({
   drawer: {
@@ -67,39 +64,24 @@ const Sidebar = props => {
       icon: <CategoryIcon />
     },
     {
+      title: 'Add Category',
+      href: '/category',
+      icon: <LibraryAddIcon />
+    },
+    {
+      title: 'Extra',
+      href: '/extra',
+      icon: <ColorizeIcon />
+    },
+    {
+      title: 'Refresh Data',
+      href: '/refresh-data',
+      icon: <AutorenewIcon />
+    },
+    {
       title: 'Users',
       href: '/users',
       icon: <PeopleIcon />
-    },
-    {
-      title: 'Products',
-      href: '/products',
-      icon: <ShoppingBasketIcon />
-    },
-    {
-      title: 'Authentication',
-      href: '/sign-in',
-      icon: <LockOpenIcon />
-    },
-    {
-      title: 'Typography',
-      href: '/typography',
-      icon: <TextFieldsIcon />
-    },
-    {
-      title: 'Icons',
-      href: '/icons',
-      icon: <ImageIcon />
-    },
-    {
-      title: 'Account',
-      href: '/account',
-      icon: <AccountBoxIcon />
-    },
-    {
-      title: 'Settings',
-      href: '/settings',
-      icon: <SettingsIcon />
     }
   ];
 
@@ -114,7 +96,6 @@ const Sidebar = props => {
         <Profile />
         <Divider className={classes.divider} />
         <SidebarNav className={classes.nav} pages={pages} />
-        <UpgradePlan />
       </div>
     </Drawer>
   );

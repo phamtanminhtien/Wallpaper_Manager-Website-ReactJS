@@ -4,14 +4,15 @@ import clsx from 'clsx';
 import { makeStyles } from '@material-ui/styles';
 import {
   Card,
-  CardContent,
   CardActions,
+  CardMedia,
   Typography,
   Grid,
-  Divider
+  Divider,
 } from '@material-ui/core';
 import TitleIcon from '@material-ui/icons/Title';
 import CreateTimeIcon from '@material-ui/icons/Create';
+import { Link } from 'react-router-dom';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -40,39 +41,41 @@ const useStyles = makeStyles(theme => ({
   statsIcon: {
     color: theme.palette.icon,
     marginRight: theme.spacing(1)
+  },
+  media: {
+    height: 0,
+    paddingTop: '56%' // 16:9
   }
 }));
 
 const PictureCard = props => {
-  const { className, data, ...rest } = props;
+  const { className, data, idc, ...rest } = props;
 
   const classes = useStyles();
 
   return (
-    <Card {...rest} className={clsx(classes.root, className)}>
-      <CardContent className={classes.content}>
-        <div className={classes.imageContainer}>
-          <img alt="Product" className={classes.image} src={data.mUrl} />
-        </div>
-      </CardContent>
-      <Divider />
-      <CardActions>
-        <Grid container justify="space-between">
-          <Grid className={classes.statsItem} item>
-            <TitleIcon className={classes.statsIcon} />
-            <Typography display="inline" variant="body2">
-              {data.mName}
-            </Typography>
+    <Link to={{ pathname: '/category/' + idc }}>
+      <Card {...rest} className={clsx(classes.root, className)}>
+        <CardMedia className={classes.media} image={data.mUrl} />
+        <Divider />
+        <CardActions>
+          <Grid container justify="space-between">
+            <Grid className={classes.statsItem} item>
+              <TitleIcon className={classes.statsIcon} />
+              <Typography display="inline" variant="body2">
+                {data.mName}
+              </Typography>
+            </Grid>
+            <Grid className={classes.statsItem} item>
+              <CreateTimeIcon className={classes.statsIcon} />
+              <Typography display="inline" variant="body2">
+                Edit
+              </Typography>
+            </Grid>
           </Grid>
-          <Grid className={classes.statsItem} item>
-            <CreateTimeIcon className={classes.statsIcon} />
-            <Typography display="inline" variant="body2">
-              Edit
-            </Typography>
-          </Grid>
-        </Grid>
-      </CardActions>
-    </Card>
+        </CardActions>
+      </Card>
+    </Link>
   );
 };
 

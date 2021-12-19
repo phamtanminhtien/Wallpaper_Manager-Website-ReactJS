@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/styles';
 import {
-  IconButton,
   Grid,
-  Typography,
-  LinearProgress
+  LinearProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  DialogContentText,
+  Button
 } from '@material-ui/core';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import { database } from '../../firebase';
 import PictureCard from './components/PictureCard';
 
@@ -18,55 +20,121 @@ const useStyles = makeStyles(theme => ({
   content: {
     marginTop: theme.spacing(2)
   },
-  pagination: {
+  loadmore: {
     marginTop: theme.spacing(3),
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end'
+    justifyContent: 'center'
   }
 }));
 
 const PictureList = () => {
+  const perpage = 30;
   const classes = useStyles();
-
-  const [pictures, setPictures] = useState({});
+  const [page, setPage] = useState(1);
+  const [numChild, setNumChild] = useState(0);
+  const [deleteID, setDeleteID] = useState('');
+  const [deleteCAT, setDeleteCAT] = useState([]);
+  const [pictures, setPictures] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+  const handleOnDelete = (id, category) => {
+    setDeleteCAT(category)
+    setDeleteID(id);
+    handleClickOpen();
+  };
+  const handleDelete = () => {
+    for (const cat in deleteCAT) {
+      database
+        .ref('PictureToCategory')
+        .child(deleteCAT[cat])
+        .once('value')
+        .then(snapshot => {
+          snapshot.forEach(snapshotChild => {
+            if (snapshotChild.val() === deleteID) {
+              snapshotChild.getRef().remove();
+            }
+          });
+        });
+    }
+    database
+      .ref('Picture')
+      .child(deleteID)
+      .remove();
+    handleClose();
+  };
   useEffect(() => {
     database
       .ref('Picture')
-      .once('value')
-      .then(snapshot => {
-        setPictures(snapshot.toJSON());
+      .orderByChild('mTime')
+      .limitToLast(page * perpage)
+      .on('value', snapshot => {
+        setNumChild(snapshot.numChildren());
+        let list = [];
+        snapshot.forEach(child => {
+          list.push({ ...child.val(), mID: child.key });
+        });
+        setPictures(list.reverse());
         setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
       });
-  }, []);
+  }, [page]);
   return (
     <div className={classes.root}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description">
+        <DialogTitle id="alert-dialog-title">{'Warning!!!'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Photos that are permanently deleted cannot be restored. Are you sure
+            you want to delete it?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            Disagree
+          </Button>
+          <Button onClick={handleDelete} color="primary" autoFocus>
+            Agree
+          </Button>
+        </DialogActions>
+      </Dialog>
       {loading && <LinearProgress />}
       <div className={classes.content}>
         <Grid container spacing={3}>
-          {Object.keys(pictures).map(product => (
-            <Grid item key={product} lg={2} md={4} xs={6}>
+          {pictures.map(product => (
+            <Grid item key={product.mID} lg={2} md={3} xs={6} xl={2}>
               <PictureCard
-                idp={product}
-                data={pictures[product]}
+                onDelete={handleOnDelete}
+                idp={product.mID}
+                data={product}
                 product={{}}
               />
             </Grid>
           ))}
         </Grid>
       </div>
-      <div className={classes.pagination}>
-        <Typography variant="caption">1-6 of 20</Typography>
-        <IconButton>
-          <ChevronLeftIcon />
-        </IconButton>
-        <IconButton>
-          <ChevronRightIcon />
-        </IconButton>
+      <div className={classes.loadmore}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            if ((page + 1) * perpage <= numChild + 3) {
+              setPage(page + 1);
+            }
+          }}>
+          Load More
+        </Button>
       </div>
     </div>
   );

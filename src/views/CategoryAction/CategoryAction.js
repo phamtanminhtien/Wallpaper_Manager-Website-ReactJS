@@ -14,8 +14,6 @@ import {
   RadioGroup,
   FormControlLabel,
   CardActions,
-  FormGroup,
-  Checkbox,
   IconButton,
   LinearProgress,
   Dialog,
@@ -48,21 +46,19 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const PictureAction = () => {
+const CategoryAction = () => {
   const { id } = useParams();
   const classes = useStyles();
   const tagInputRef = useRef();
+  const nameInputRef = useRef();
   const fileInputRef = useRef();
   const urlInputRef = useRef();
   const [notif, setNotif] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [categoriesChooseOld, setCategoriesChooseOld] = useState([]);
   const [tag, setTag] = useState('');
   const [listTag, setListTag] = useState([]);
-  const [categories, setCategories] = useState({});
-  const [categoriesChoose, setCategoriesChoose] = useState([]);
   const [view, setView] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadPush, setLoadPush] = useState(false);
   const [method, setMethod] = useState(URL);
   const handleClickSave = () => {
@@ -74,8 +70,8 @@ const PictureAction = () => {
       setNotif("Insert Tag. It's used as a kayword");
       setOpenDialog(true);
       return;
-    } else if (categoriesChoose.length === 0) {
-      setNotif("Choose a category, It's really necessary to categorize");
+    } else if (nameInputRef.current.value === '') {
+      setNotif('Please enter the category name');
       setOpenDialog(true);
       return;
     } else if (view === '') {
@@ -94,7 +90,7 @@ const PictureAction = () => {
       let time = new Date(new Date().getTime() + offset * 3600 * 1000)
         .toUTCString()
         .replace(/ GMT$/, '');
-      let image = storage.ref().child('wall/' + time + '.' + ext);
+      let image = storage.ref().child('wall/categories/' + time + '.' + ext);
       image.put(file).then(() => {
         image.getDownloadURL().then(url => {
           urlInputRef.current.value = url;
@@ -112,87 +108,42 @@ const PictureAction = () => {
   };
   const pushToDatabase = url => {
     if (id) {
-      let picture = database.ref('Picture').child(id);
-      picture.update(
-        {
-          mCategory: categoriesChoose,
-          mKeyWord: listTag,
-          mType: 0,
-          mUrl: url,
-          mView: parseInt(view),
-          mTime: firebase.database.ServerValue.TIMESTAMP
-        },
-        e => {
-          if (!e) {
-            let removed = 0;
-            for (const category in categoriesChooseOld) {
-              database
-                .ref('PictureToCategory')
-                .child(categoriesChooseOld[category])
-                .once('value')
-                .then(snapshot => {
-                  snapshot.forEach(snapshotChild => {
-                    if (snapshotChild.val() === id) {
-                      snapshotChild.getRef().remove();
-                      if (removed === categoriesChooseOld.length - 1) {
-                        for (const category2 in categoriesChoose) {
-                          database
-                            .ref('PictureToCategory')
-                            .child(categoriesChoose[category2])
-                            .push(picture.key, e => {
-                              if (
-                                !e &&
-                                parseInt(category2) ===
-                                  categoriesChoose.length - 1
-                              ) {
-                                handleFN();
-                              }
-                            });
-                        }
-                        removed = 0;
-                        setCategoriesChooseOld(categoriesChoose);
-                        return;
-                      }
-                      removed++;
-                    }
-                  });
-                });
+      database
+        .ref('Category')
+        .child(id)
+        .update(
+          {
+            mName: nameInputRef.current.value,
+            mKeyWord: listTag,
+            mUrl: url,
+            mView: parseInt(view),
+            mTime: firebase.database.ServerValue.TIMESTAMP
+          },
+          e => {
+            if (!e) {
+              handleFN();
             }
           }
-        }
-      );
+        );
     } else {
-      let picture = database.ref('Picture').push(
+      database.ref('Category').push(
         {
-          mCategory: categoriesChoose,
+          mName: nameInputRef.current.value,
           mKeyWord: listTag,
-          mType: 0,
           mUrl: url,
           mView: parseInt(view),
           mTime: firebase.database.ServerValue.TIMESTAMP
         },
         e => {
           if (!e) {
-            for (const category in categoriesChoose) {
-              database
-                .ref('PictureToCategory')
-                .child(categoriesChoose[category])
-                .push(picture.key, e => {
-                  if (
-                    !e &&
-                    parseInt(category) === categoriesChoose.length - 1
-                  ) {
-                    setListTag([]);
-                    setCategoriesChoose([]);
-                    setView(0);
-                    setMethod(URL);
-                    tagInputRef.current.value = '';
-                    setTag('');
-                    urlInputRef.current.value = '';
-                    handleFN();
-                  }
-                });
-            }
+            setListTag([]);
+            setTag('');
+            setView(0);
+            setMethod(URL);
+            urlInputRef.current.value = '';
+            tagInputRef.current.value = '';
+            nameInputRef.current.value = '';
+            handleFN();
           }
         }
       );
@@ -217,49 +168,25 @@ const PictureAction = () => {
   const handleChangeTag = event => {
     setTag(event.target.value);
   };
-  const handleChangeCategories = event => {
-    if (
-      categoriesChoose.indexOf(event.target.name) === -1 &&
-      event.target.checked
-    ) {
-      setCategoriesChoose([...categoriesChoose, event.target.name]);
-    } else {
-      setCategoriesChoose(
-        [...categoriesChoose].filter(value => value !== event.target.name)
-      );
-    }
-  };
   useEffect(() => {
-    database
-      .ref('Category')
-      .once('value')
-      .then(snapshot => {
-        setCategories(snapshot.toJSON());
-        if (id) {
-          database
-            .ref('Picture')
-            .child(id)
-            .once('value')
-            .then(snapshotPicture => {
-              setLoading(false);
-              setCategoriesChooseOld(
-                snapshotPicture.val().mCategory
-                  ? Object.values(snapshotPicture.val().mCategory)
-                  : []
-              );
-              setData(snapshotPicture.val());
-            });
-        } else {
+    if (id) {
+      setLoading(true);
+      database
+        .ref('Category')
+        .child(id)
+        .once('value')
+        .then(snapshot => {
           setLoading(false);
-        }
-      });
-  }, []);
+          setData(snapshot.val());
+        });
+    }
+  }, [id]);
   const setData = data => {
     setMethod(URL);
     setListTag(data.mKeyWord ? Object.values(data.mKeyWord) : []);
-    setCategoriesChoose(data.mCategory ? Object.values(data.mCategory) : []);
     setView(data.mView);
     setTag('');
+    nameInputRef.current.value = data.mName;
     tagInputRef.current.value = '';
     urlInputRef.current.value = data.mUrl;
   };
@@ -288,7 +215,7 @@ const PictureAction = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {loadPush && <LinearProgress style={{ marginBottom: 20 }} />}
+      {loadPush && <LinearProgress />}
       {loading ? (
         <LinearProgress />
       ) : (
@@ -334,6 +261,13 @@ const PictureAction = () => {
                       variant="outlined"
                     />
                   </FormControl>
+                  <FormControl fullWidth className={classes.margin}>
+                    <TextField
+                      inputRef={nameInputRef}
+                      label="Name"
+                      variant="outlined"
+                    />
+                  </FormControl>
                   <input
                     onChange={() => {
                       urlInputRef.current.value =
@@ -356,27 +290,6 @@ const PictureAction = () => {
                       </Button>
                     </FormControl>
                   )}
-                  <FormControl className={classes.margin}>
-                    <FormLabel component="legend">Categories</FormLabel>
-                    <FormGroup>
-                      {Object.keys(categories).map(id => {
-                        return (
-                          <FormControlLabel
-                            key={id}
-                            control={
-                              <Checkbox
-                                checked={categoriesChoose.indexOf(id) !== -1}
-                                size="small"
-                                name={id}
-                                onChange={handleChangeCategories}
-                              />
-                            }
-                            label={categories[id].mName}
-                          />
-                        );
-                      })}
-                    </FormGroup>
-                  </FormControl>
                   <FormControl className={classes.margin} fullWidth>
                     <TextField
                       onChange={handleChangeTag}
@@ -446,4 +359,4 @@ const PictureAction = () => {
   );
 };
 
-export default PictureAction;
+export default CategoryAction;
